@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Correspondence</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #correspondenceWindow {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="correspondenceWindow" class="bg-light p-3">
+        <!-- Chat messages will appear here -->
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <textarea id="interlocutorText" class="form-control"></textarea>
+            <button id="sendInterlocutor" class="btn btn-primary mt-2">Send</button>
+        </div>
+        <div class="col-md-6">
+            <textarea id="ourText" class="form-control"></textarea>
+            <button id="sendOurText" class="btn btn-primary mt-2">Send</button>
+        </div>
+    </div>
+
+    <button id="runBtn" class="btn btn-success mt-2">Run (Send POST request)</button>
+</div>
+
+<script>
+    let history = [];
+
+    function updateCorrespondenceWindow() {
+        let correspondenceDiv = document.getElementById('correspondenceWindow');
+        correspondenceDiv.innerHTML = '';
+
+        history.forEach((item) => {
+            let messageDiv = document.createElement('div');
+            messageDiv.className = 'border rounded p-2 mb-2';
+            messageDiv.className += item.sender === 'Interlocutor' ? ' bg-info text-white' : ' bg-success text-white';
+
+            let textNode = document.createTextNode(`${item.sender}: ${item.text}`);
+            messageDiv.appendChild(textNode);
+
+            correspondenceDiv.appendChild(messageDiv);
+        });
+
+        correspondenceDiv.scrollTop = correspondenceDiv.scrollHeight;
+    }
+
+    document.getElementById('sendInterlocutor').addEventListener('click', function() {
+        let text = document.getElementById('interlocutorText').value;
+        history.push({ sender: 'Interlocutor', text });
+        document.getElementById('interlocutorText').value = '';
+        updateCorrespondenceWindow();
+    });
+
+    document.getElementById('sendOurText').addEventListener('click', function() {
+        let text = document.getElementById('ourText').value;
+        history.push({ sender: 'You', text });
+        document.getElementById('ourText').value = '';
+        updateCorrespondenceWindow();
+    });
+
+    document.getElementById('runBtn').addEventListener('click', function() {
+        fetch('/api/correspondence', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ history })
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch((error) => console.error('Error:', error));
+    });
+</script>
+
+</body>
+</html>
